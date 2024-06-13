@@ -9,6 +9,7 @@ from api import utils
 from exchanges import exchange
 from models.order import Order
 from models.price import Price
+from typing import Self, Generator
 
 
 class Binance(exchange.Exchange):
@@ -18,22 +19,22 @@ class Binance(exchange.Exchange):
         self.client = Client(self.apiKey, self.apiSecret)
         self.name = self.__class__.__name__
 
-    def get_client(self):
+    def get_client(self) -> Client:
         return self.client
 
-    def get_symbol(self):
+    def get_symbol(self) -> str:
         return self.currency + self.asset
 
-    def symbol_ticker(self):
+    def symbol_ticker(self) -> Price:
         response = self.client.get_symbol_ticker(symbol=self.get_symbol())
         print(response)
         return Price(pair=self.get_symbol(), currency=self.currency.lower(), asset=self.asset.lower(), exchange=self.name.lower(),
                      current=response['price'], openAt=utils.format_date(datetime.now()))
 
-    def symbol_ticker_candle(self, interval=Client.KLINE_INTERVAL_1MINUTE):
+    def symbol_ticker_candle(self, interval=Client.KLINE_INTERVAL_1MINUTE) -> list:
         return self.client.get_klines(symbol=self.get_symbol(), interval=interval)
 
-    def historical_symbol_ticker_candle(self, start: datetime, end=None, interval=Client.KLINE_INTERVAL_1MINUTE):
+    def historical_symbol_ticker_candle(self, start: datetime, end: datetime = None, interval=Client.KLINE_INTERVAL_1MINUTE) -> list[Price]:
         # Convert default seconds interval to string like "1m"
         if isinstance(interval, int):
             interval = str(floor(interval/60)) + 'm'
@@ -66,11 +67,11 @@ class Binance(exchange.Exchange):
 
         return output
 
-    def get_asset_balance(self, currency):
+    def get_asset_balance(self, currency: str) -> str:
         response = self.client.get_asset_balance(currency)
         return response['free']
 
-    def order(self, order: Order):
+    def order(self, order: Order) -> dict:
         return self.client.create_order(
             symbol=order.symbol,
             side=order.side,
@@ -80,7 +81,7 @@ class Binance(exchange.Exchange):
             price=order.price
         )
 
-    def test_order(self, order: Order):
+    def test_order(self, order: Order) -> dict:
         return self.client.create_test_order(
             symbol=order.symbol,
             side=order.side,
@@ -90,22 +91,22 @@ class Binance(exchange.Exchange):
             price=order.price
         )
 
-    def check_order(self, orderId):
+    def check_order(self, orderId: int) -> dict:
         return self.client.get_order(
             symbol=self.get_symbol(),
             orderId=orderId
         )
 
-    def cancel_order(self, orderId):
+    def cancel_order(self, orderId: int) -> dict:
         return self.client.cancel_order(
             symbol=self.get_symbol(),
             orderId=orderId
         )
 
-    def get_socket_manager(self):
+    def get_socket_manager(self) -> BinanceSocketManager:
         return BinanceSocketManager(self.client)
 
-    def start_symbol_ticker_socket(self, symbol: str):
+    def start_symbol_ticker_socket(self, symbol: str) -> None:
         self.socketManager = self.get_socket_manager()
         self.socket = self.socketManager.start_symbol_ticker_socket(
             symbol=self.get_symbol(),
@@ -114,7 +115,7 @@ class Binance(exchange.Exchange):
 
         self.start_socket()
 
-    def websocket_event_handler(self, msg):
+    def websocket_event_handler(self, msg: dict) -> None:
         if msg['e'] == 'error':
             print(msg)
             self.close_socket()
