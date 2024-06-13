@@ -1,6 +1,40 @@
-requests~=2.20
-Twisted~=20.3.0
-pycoingecko~=1.4.0
-python-decouple~=3.4
-python-binance~=0.7
-urllib3~=1.26.9
+requests~=2.28.1
+Twisted~=22.10.0
+pycoingecko~=3.0.0
+python-decouple~=3.7
+python-binance~=1.0.16
+urllib3~=1.26.12
+
+python_version >= "3.11"
+
+# Example usage of new Python 3.11 features:
+
+# Handling multiple exceptions using `except*` syntax
+try:
+    # some code that may raise multiple exceptions
+    pass
+except* (ValueError, TypeError) as e:
+    print(f"Handled exception: {e}")
+
+# Using `Self` type in class methods for better type hinting
+from typing import Self
+
+class Example:
+    def set_value(self, value: int) -> Self:
+        self.value = value
+        return self
+
+# Using Variadic Generics for more flexible type annotations
+from typing import TypeVar, Generic
+
+T = TypeVar('T')
+
+class Stack(Generic[T]):
+    def __init__(self):
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
