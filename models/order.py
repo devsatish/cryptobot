@@ -1,4 +1,5 @@
 from models.model import AbstractModel
+from typing import Self
 
 
 class Order(AbstractModel):
@@ -23,5 +24,5 @@ class Order(AbstractModel):
     quantity: int = 0
     test: bool = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> Self:
         super().__init__(**kwargs)
