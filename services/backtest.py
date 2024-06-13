@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from typing import Self
 
 from exchanges.exchange import Exchange
 from models.dataset import Dataset
@@ -7,7 +8,7 @@ from models.price import Price
 
 
 class Backtest:
-    def __init__(self, exchange: Exchange, period_start: datetime, period_end=None, interval=60):
+    def __init__(self, exchange: Exchange, period_start: datetime, period_end: datetime | None = None, interval: int = 60) -> None:
         self.launchedAt = datetime.now()
         # Try to find dataset
         dataset = Dataset().get({"exchange": exchange.name.lower(),
