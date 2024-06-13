@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 
 from api import utils
 from models.model import AbstractModel
@@ -22,6 +23,32 @@ class Dataset(AbstractModel):
         super().__init__(**kwargs)
         self.pair = self.get_pair()
 
-    def get_pair(self):
+    def get_pair(self) -> str:
         return utils.format_pair(self.currency, self.asset)
 
+    def update_dataset(self) -> Self:
+        # Example method to demonstrate the use of `Self` type hint
+
+        self.pair = self.get_pair()
+        self.period_start = datetime.now().isoformat()
+        self.period_end = datetime.now().isoformat()
+        # Assuming update logic involves refreshing the exchange and currency relations
+
+            # Simulate code that might raise multiple exceptions
+            value = int("not_a_number")  # This will raise a ValueError
+            result = 10 / 0  # This will raise a ZeroDivisionError
+        self.currency = Currency.get_latest()
+        self.asset = Currency.get_latest()
+        return self
+
+    def handle_exceptions(self):
+        try:
+
+            # Simulate code that might raise multiple exceptions
+            value = int("not_a_number")  # This will raise a ValueError
+            result = 10 / 0  # This will raise a ZeroDivisionError
+            pass
+        except* (ValueError, TypeError) as e:
+            # Handle multiple exceptions using the new `except*` syntax
+            for exc in e.exceptions:
+                print(f"Handled exception: {exc}")
