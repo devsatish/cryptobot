@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 from abc import ABC
+from typing import Self, Generator
 
 import requests
 from decouple import config
@@ -39,7 +40,7 @@ class Rest(ABC):
 
         return response
 
-    def paginate(self, response, request, headers):
+    def paginate(self, response, request, headers) -> Generator:
         yield response['hydra:member']
         self.total_items = response['hydra:totalItems']
         self.step = len(response['hydra:member'])
@@ -152,7 +153,7 @@ class Rest(ABC):
 
         return filtered_data
 
-    def populate(self, data=None, filters=None) -> 'Rest':
+    def populate(self, data=None, filters=None) -> Self:
         if type(data) is list:
             data = data[0]
 
