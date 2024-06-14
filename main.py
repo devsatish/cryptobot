@@ -9,8 +9,8 @@ from decouple import config
 from services.backtest import Backtest
 from services.importer import Importer
 
-exchange_name = config('EXCHANGE')
-available_exchanges = config('AVAILABLE_EXCHANGES').split(',')
+exchange_name: str = config('EXCHANGE')
+available_exchanges: list[str] = config('AVAILABLE_EXCHANGES').split(',')
 mode: str = config('MODE')
 strategy: str = config('STRATEGY')
 trading_mode: str = config('TRADING_MODE')
@@ -31,22 +31,22 @@ if len(sys.argv) > 1:
         asset = currencies[1]
 
 # Load exchange
-print("Connecting to {} exchange...".format(exchange_name[0].upper() + exchange_name[1:]))
-exchangeModule = importlib.import_module('exchanges.' + exchange_name, package=None)
-exchangeClass = getattr(exchangeModule, exchange_name[0].upper() + exchange_name[1:])
-exchange = exchangeClass(config(exchange_name.upper() + '_API_KEY'), config(exchange_name.upper() + '_API_SECRET'))
+print(f"Connecting to {exchange_name.capitalize()} exchange...")
+exchangeModule = importlib.import_module(f'exchanges.{exchange_name}', package=None)
+exchangeClass = getattr(exchangeModule, exchange_name.capitalize())
+exchange = exchangeClass(config(f'{exchange_name.upper()}_API_KEY'), config(f'{exchange_name.upper()}_API_SECRET'))
 
 # Load currencies
 exchange.set_currency(currency)
 exchange.set_asset(asset)
 
 # Load strategy
-strategyModule = importlib.import_module('strategies.' + strategy, package=None)
-strategyClass = getattr(strategyModule, strategy[0].upper() + strategy[1:])
+strategyModule = importlib.import_module(f'strategies.{strategy}', package=None)
+strategyClass = getattr(strategyModule, strategy.capitalize())
 exchange.set_strategy(strategyClass(exchange, interval))
 
 # mode
-print("{} mode on {} symbol".format(mode, exchange.get_symbol()))
+print(f"{mode} mode on {exchange.get_symbol()} symbol")
 if mode == 'trade':
     exchange.strategy.start()
 
@@ -54,29 +54,20 @@ elif mode == 'live':
     exchange.start_symbol_ticker_socket(exchange.get_symbol())
 
 elif mode == 'backtest':
-    period_start = config('PERIOD_START')
-    period_end = config('PERIOD_END')
+    period_start: str = config('PERIOD_START')
+    period_end: str = config('PERIOD_END')
 
     print(
-        "Backtest period from {} to {} with {} seconds candlesticks.".format(
-            period_start,
-            period_end,
-            interval
-        )
+        f"Backtest period from {period_start} to {period_end} with {interval} seconds candlesticks."
     )
     Backtest(exchange, period_start, period_end, interval)
 
 elif mode == 'import':
-    period_start = config('PERIOD_START')
-    period_end = config('PERIOD_END')
+    period_start: str = config('PERIOD_START')
+    period_end: str = config('PERIOD_END')
 
     print(
-        "Import mode on {} symbol for period from {} to {} with {} seconds candlesticks.".format(
-            exchange.get_symbol(),
-            period_start,
-            period_end,
-            interval
-        )
+        f"Import mode on {exchange.get_symbol()} symbol for period from {period_start} to {period_end} with {interval} seconds candlesticks."
     )
     importer = Importer(exchange, period_start, period_end, interval)
     importer.process()
@@ -85,8 +76,8 @@ else:
     print('Not supported mode.')
 
 
-def signal_handler(signal, frame):
-    if (exchange.socket):
+def signal_handler(signal: int, frame) -> None:
+    if exchange.socket:
         print('Closing WebSocket connection...')
         exchange.close_socket()
         sys.exit(0)
