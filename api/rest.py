@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 from abc import ABC
+from collections.abc import Generator
 
 import requests
 from decouple import config
@@ -22,7 +23,7 @@ class Rest(ABC):
     total_items = 0
     step = 0
 
-    def query(self, method: str = 'get', data=None, headers=None, iri: str = None):
+    def query(self, method: str = 'get', data: dict = None, headers: dict = None, iri: str = None) -> dict:
         if headers is None:
             headers = {}
         if data is None:
@@ -39,7 +40,7 @@ class Rest(ABC):
 
         return response
 
-    def paginate(self, response, request, headers):
+    def paginate(self, response: dict, request: dict, headers: dict) -> Generator[dict, None, None]:
         yield response['hydra:member']
         self.total_items = response['hydra:totalItems']
         self.step = len(response['hydra:member'])
@@ -57,60 +58,60 @@ class Rest(ABC):
 
         return
 
-    def get(self, data=None, headers=None):
+    def get(self, data: dict = None, headers: dict = None) -> dict:
         if headers is None:
             headers = {}
         if data is None:
             data = {}
         return self.query(method="get", data=json.dumps(self.serialize(data)), headers=self.build_headers(headers))
 
-    def post(self, data=None, headers=None):
+    def post(self, data: dict = None, headers: dict = None) -> dict:
         if headers is None:
             headers = {}
         if data is None:
             data = {}
         return self.query(method="post", data=json.dumps(self.serialize(data)), headers=self.build_headers(headers))
 
-    def put(self, data=None, headers=None):
+    def put(self, data: dict = None, headers: dict = None) -> dict:
         if data is None:
             data = {}
         if headers is None:
             headers = {}
         return self.query(method="put", data=json.dumps(self.serialize(data)), headers=self.build_headers(headers))
 
-    def delete(self, data=None, headers=None):
+    def delete(self, data: dict = None, headers: dict = None) -> dict:
         if headers is None:
             headers = {}
         if data is None:
             data = {}
         return self.query(method="delete", data=json.dumps(self.serialize(data)), headers=self.build_headers(headers))
 
-    def create(self, data=None):
+    def create(self, data: dict = None) -> 'Rest':
         if data is None:
             data = {}
         response = self.post(self.serialize(data))
         print('response', response)
         return self.populate(data=[response])
 
-    def read(self, data=None):
+    def read(self, data: dict = None) -> 'Rest':
         if data is None:
             data = {}
         resource = self.get(data=data)
         return self.populate(data=[resource])
 
-    def update(self, data=None):
+    def update(self, data: dict = None) -> 'Rest':
         if data is None:
             data = {}
         resource = self.put(data=data)
         return self.populate(data=[resource])
 
-    def remove(self, data=None):
+    def remove(self, data: dict = None) -> dict:
         if data is None:
             data = {}
         resource = self.delete(data=data)
         return resource
 
-    def build_url(self, resource: str, iri: str = None):
+    def build_url(self, resource: str, iri: str = None) -> str:
         endpoint = self.api_root + self.api_uri + resource
         if iri is not None:
             return iri
@@ -119,20 +120,20 @@ class Rest(ABC):
 
         return endpoint + '/' + self.uuid
 
-    def build_headers(self, headers: dict):
+    def build_headers(self, headers: dict) -> dict:
         return {
             **self.headers,
             **headers
         }
 
-    def get_relation(self, model, iri: str, headers=None):
+    def get_relation(self, model, iri: str, headers: dict = None) -> 'Rest':
         if headers is None:
             headers = {}
         resource = self.query(method="get", data=json.dumps(self.serialize()), headers=self.build_headers(headers),
                               iri=iri)
         return model().populate(data=resource)
 
-    def serialize(self, data=None, filters=None):
+    def serialize(self, data: dict = None, filters: set = None) -> dict:
         if filters is None:
             filters = {"rest", "relations", "resource_name"}
         if data is None:
@@ -141,9 +142,9 @@ class Rest(ABC):
         filtered_data = filter_keys(data={**self.__dict__, **data}, keys=filters)
         # Populate IRI for object relations
         for key, value in filtered_data.items():
-            if key in self.relations and type(value) == str and '/' not in value:
+            if key in self.relations and isinstance(value, str) and '/' not in value:
                 filtered_data[key] = '/' + self.api_uri + self.relations[key].resource_name + '/' + value.lower()
-            elif key in self.relations and type(value) == dict:
+            elif key in self.relations and isinstance(value, dict):
                 filtered_data[key] = value['@id']
             elif isinstance(value, datetime.datetime):
                 filtered_data[key] = value.strftime("%m/%d/%Y, %H:%M:%S")
@@ -152,18 +153,18 @@ class Rest(ABC):
 
         return filtered_data
 
-    def populate(self, data=None, filters=None) -> 'Rest':
-        if type(data) is list:
+    def populate(self, data: dict = None, filters: set = None) -> 'Rest':
+        if isinstance(data, list):
             data = data[0]
 
-        if type(data) is None or None in data:
+        if data is None or None in data:
             return self
 
         if filters is None:
             filters = {}
 
         filtered_data = filter_keys(data=data, keys=filters)
-        for [key, value] in filtered_data.items():
+        for key, value in filtered_data.items():
             setattr(self, key, value)
 
         return self
