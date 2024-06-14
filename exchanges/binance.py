@@ -1,5 +1,6 @@
 from datetime import datetime
 from math import floor
+from typing import Self
 
 from binance.client import Client
 from binance.enums import *
@@ -18,13 +19,13 @@ class Binance(exchange.Exchange):
         self.client = Client(self.apiKey, self.apiSecret)
         self.name = self.__class__.__name__
 
-    def get_client(self):
+    def get_client(self) -> Client:
         return self.client
 
-    def get_symbol(self):
+    def get_symbol(self) -> str:
         return self.currency + self.asset
 
-    def symbol_ticker(self):
+    def symbol_ticker(self) -> Price:
         response = self.client.get_symbol_ticker(symbol=self.get_symbol())
         print(response)
         return Price(pair=self.get_symbol(), currency=self.currency.lower(), asset=self.asset.lower(), exchange=self.name.lower(),
@@ -33,10 +34,10 @@ class Binance(exchange.Exchange):
     def symbol_ticker_candle(self, interval=Client.KLINE_INTERVAL_1MINUTE):
         return self.client.get_klines(symbol=self.get_symbol(), interval=interval)
 
-    def historical_symbol_ticker_candle(self, start: datetime, end=None, interval=Client.KLINE_INTERVAL_1MINUTE):
+    def historical_symbol_ticker_candle(self, start: datetime, end: datetime = None, interval=Client.KLINE_INTERVAL_1MINUTE) -> list[Price]:
         # Convert default seconds interval to string like "1m"
         if isinstance(interval, int):
-            interval = str(floor(interval/60)) + 'm'
+            interval = str(floor(interval / 60)) + 'm'
 
         output = []
         for candle in self.client.get_historical_klines_generator(self.get_symbol(), interval, start, end):
@@ -61,12 +62,12 @@ class Binance(exchange.Exchange):
             """
             output.append(
                 Price(pair=self.compute_symbol_pair(), currency=self.currency.lower(), asset=self.asset.lower(), exchange=self.name.lower(),
-                      current=candle[1], lowest=candle[3], highest=candle[2], volume=candle[5], openAt=utils.format_date(datetime.fromtimestamp(int(candle[0])/1000)))
+                      current=candle[1], lowest=candle[3], highest=candle[2], volume=candle[5], openAt=utils.format_date(datetime.fromtimestamp(int(candle[0]) / 1000)))
             )
 
         return output
 
-    def get_asset_balance(self, currency):
+    def get_asset_balance(self, currency: str) -> str:
         response = self.client.get_asset_balance(currency)
         return response['free']
 
@@ -90,19 +91,19 @@ class Binance(exchange.Exchange):
             price=order.price
         )
 
-    def check_order(self, orderId):
+    def check_order(self, orderId: int):
         return self.client.get_order(
             symbol=self.get_symbol(),
             orderId=orderId
         )
 
-    def cancel_order(self, orderId):
+    def cancel_order(self, orderId: int):
         return self.client.cancel_order(
             symbol=self.get_symbol(),
             orderId=orderId
         )
 
-    def get_socket_manager(self):
+    def get_socket_manager(self) -> BinanceSocketManager:
         return BinanceSocketManager(self.client)
 
     def start_symbol_ticker_socket(self, symbol: str):
@@ -114,7 +115,7 @@ class Binance(exchange.Exchange):
 
         self.start_socket()
 
-    def websocket_event_handler(self, msg):
+    def websocket_event_handler(self, msg: dict):
         if msg['e'] == 'error':
             print(msg)
             self.close_socket()
