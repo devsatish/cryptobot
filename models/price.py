@@ -3,6 +3,7 @@ from models.model import AbstractModel
 from models.currency import Currency
 from models.dataset import Dataset
 from models.exchange import Exchange
+from typing import Self
 
 
 class Price(AbstractModel):
@@ -17,14 +18,13 @@ class Price(AbstractModel):
     volume: float = 0
     currency: str = ''
     asset: str = ''
-    dataset: str = ''
     openAt: str
 
     relations = {'exchange': Exchange, 'currency': Currency, 'asset': Currency, 'dataset': Dataset}
 
-    def __init__(self, **kwargs):
+    def __init__(self: Self, **kwargs):
         super().__init__(**kwargs)
         self.pair = self.get_pair()
 
-    def get_pair(self):
+    def get_pair(self: Self) -> str:
         return utils.format_pair(self.currency, self.asset)
